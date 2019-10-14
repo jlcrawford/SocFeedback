@@ -1,10 +1,9 @@
 ---
-title: "Social-Feedback-Paper"
+title: "Social Feedback Paper"
 author: "Jennifer Crawford"
 date: "10.13.19"
 output: 
-  html_document: default
-  pdf_document: defualt
+  html_document: 
 urlcolor: blue
 ---
 #Experiment I - Within-Subject Manipulation of both social (dynamic stim) and liquid feedback
@@ -15,22 +14,22 @@ rm(list=ls())
 # load libraries
 library(kableExtra); library(ez); library(knitr); library(RColorBrewer); library(tidyverse); source("summarySEwithin2.R")
 # summarySEwithin2 function 
-source("https://github.com/jlcrawford/SocFeedback/blob/master/summarySEwithin2.R")
+source("https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/summarySEwithin2.R")
 ```
 
 ##Reward Rate Calculation
 
 ``` {r RR_SFLF, echo = TRUE}
 #Import Data
-data.path.sf <- "https://github.com/jlcrawford/SocFeedback/blob/master/Experiment1/Data/SF_merged_FINAL.csv"
-data.path.lf <- "https://github.com/jlcrawford/SocFeedback/blob/master/Experiment1/Data/LF_merged_FINAL.csv"
+data.path.sf <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment1/Data/SF_merged_FINAL.csv"
+data.path.lf <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment1/Data/LF_merged_FINAL.csv"
 
-data.reward.sf <-read.csv(data.path.sf, header = TRUE) %>% select(-X) %>%
+data.reward.sf <-read.csv(data.path.sf, header = TRUE) %>%
     select(Subject, Trial, Condition, Target.RT, CriterionRT, Target.ACC, Target.RESP, Session, CorrectResponse, Reward, Procedure.Trial.) %>%
     mutate(IncentiveType="Social",
            Valence=factor(Condition, levels=c("P","T","N"), labels=c("Positive","Neutral","Negative")))
   
-data.reward.lf <-read.csv(data.path.lf, header = TRUE) %>% select(-X) %>%
+data.reward.lf <-read.csv(data.path.lf, header = TRUE) %>% 
     select(Subject, Trial, Condition, Target.RT, CriterionRT, Target.ACC, Target.RESP, Session, CorrectResponse, Reward, Procedure.Trial.) %>%
     mutate(IncentiveType="Liquid", 
            Valence=factor(Condition, levels=c("J","N","S"), labels=c("Positive","Neutral","Negative")))
@@ -139,12 +138,12 @@ liquid.anova.E1
 
 ``` {r AffectRatings}
 # Format Affect Rating Data
-affect.sf <- read.csv('DynamStim_v2_FINAL.csv') %>% select(Subject, Trial, Condition, Feeling, Ratings.RESP, Ratings.RT, Procedure.Trial.) %>%
+affect.sf <- read.csv(data.path.sf, header = TRUE) %>% select(Subject, Trial, Condition, Feeling, Ratings.RESP, Ratings.RT, Procedure.Trial.) %>%
   mutate(IncentiveType="Social", 
          Valence=factor(Condition, levels=c("P","T","N"), labels=c("Positive","Neutral","Negative"))) %>% 
   filter(Procedure.Trial. == "RatingsTask")
 
-affect.lf <- read.csv('LF_merged_FINAL.csv') %>% select(Subject, Trial, Condition, Feeling, Ratings.RESP, Ratings.RT, Procedure.Trial.) %>% 
+affect.lf <- read.csv(data.path.lf, header = TRUE) %>% select(Subject, Trial, Condition, Feeling, Ratings.RESP, Ratings.RT, Procedure.Trial.) %>% 
   mutate(IncentiveType="Liquid",
          Valence=factor(Condition, levels=c("J","N","S"), labels=c("Positive","Neutral","Negative"))) %>%
   filter(Procedure.Trial. == "RatingsTask")
@@ -212,8 +211,8 @@ liquid.affect.anova
 
 ``` {r SelfReport}
 # Import Self-Report Data
-data.path.selfreport < "https://github.com/jlcrawford/SocFeedback/blob/master/Experiment1/Data/SFLF_SelfReport.csv"
-data.post.task <- read.csv(data.path.selfreport, header = TRUE) %>% select(-X)
+data.path.selfreport <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment1/Data/SFLF_SelfReport.csv"
+data.post.task <- read.csv(data.path.selfreport, header = TRUE)
 
 #Motivation Ratings
 #Social Feedback
@@ -373,11 +372,11 @@ BISBAS <- data.post.task %>% select(Subject, starts_with("bisbas"))
 
 ``` {r importE2}
 #import data paths from github
-data.path <- "https://github.com/jlcrawford/SocFeedback/blob/master/Experiment2/Data/Data_Reward.csv"
-baseline.path<-"https://github.com/jlcrawford/SocFeedback/blob/master/Experiment2/Data/Data_Baseline.csv"
-indiv.path <- "https://github.com/jlcrawford/SocFeedback/blob/master/Experiment2/Data/Data_Indiv_Composite.csv"
-ratings.liq.path <- "https://github.com/jlcrawford/SocFeedback/blob/master/Experiment2/Data/Data_Ratings_Liquid.csv"
-ratings.soc.path <- "https://github.com/jlcrawford/SocFeedback/blob/master/Experiment2/Data/Data_Ratings_Social.csv"
+data.path <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment2/Data/Data_Reward.csv"
+baseline.path<-"https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment2/Data/Data_Baseline.csv"
+indiv.path <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment2/Data/Data_Indiv_Composite.csv"
+ratings.liq.path <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment2/Data/Data_Ratings_Liquid.csv"
+ratings.soc.path <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment2/Data/Data_Ratings_Social.csv"
 ```
 
 ##Formatting the Data
@@ -475,6 +474,21 @@ p.RR.Exp2<-ggplot(RR.sum.2, aes(x=Valence, y=meanRR, fill=moneyreward)) +
     strip.text.x = element_text(size = 12)) +
   facet_grid(.~IncentiveType)
 p.RR.Exp2
+
+#Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
+omnibus.anova.E2<-ezANOVA(data = data.val.inc.mon.means, dv = meanRR, wid = .(subID), within = c("Valence","IncentiveType","moneyreward"))
+kable(omnibus.anova.E2)
+omnibus.anova.E2
+
+#Social Feedback ANOVA (Valence x Monetary Reward)
+social.anova.E2<-ezANOVA((data = data.val.inc.mon.means %>% filter(IncentiveType== "Social")), dv = meanRR, wid = .(subID), within = c("Valence","moneyreward"))
+kable(social.anova.E2)
+social.anova.E2
+
+#Liquid Feedback ANOVA (Valence x Monetary Reward)
+liquid.anova.E2<-ezANOVA((data = data.val.inc.mon.means %>% filter(IncentiveType== "Liquid")), dv = meanRR, wid = .(subID), within = c("Valence","moneyreward"))
+kable(liquid.anova.E2)
+liquid.anova.E2
 ```
 
 ##Self-Report Data (Supplemental Material)
