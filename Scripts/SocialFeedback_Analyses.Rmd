@@ -12,7 +12,7 @@ urlcolor: blue
 # Clear workspace
 rm(list=ls())
 # load libraries
-library(kableExtra); library(ez); library(knitr); library(RColorBrewer); library(tidyverse); source("summarySEwithin2.R")
+library(kableExtra); library(ez); library(knitr); library(RColorBrewer); library(tidyverse)
 # summarySEwithin2 function 
 source("https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/summarySEwithin2.R")
 ```
@@ -363,9 +363,23 @@ kable(liquid.anova.liking.E1)
 liquid.anova.liking.E1
 
 #BISBAS
-BISBAS <- data.post.task %>% select(Subject, starts_with("bisbas"))
+BISBAS <- data.post.task %>% select(Subject, starts_with("bisbas")) %>% select(-"bisbas_complete") %>%
+  gather(key = item, value = value, -starts_with("Subject")) %>%
+  separate(item, c(NA, "trait"), sep = "_") %>%
+  separate(trait, sep = -1, into = c("trait", NA)) %>%
+  group_by(Subject, trait) %>%
+  summarise(sum = sum(value)) %>%
+  ungroup() %>%
+  spread(key= trait, value = sum)
 
 #DARS
+DARS <- data.post.task %>% select(Subject, starts_with("dars")) %>% select(-"dars_complete") %>% select(-contains("_desc")) %>%
+  gather(key = item, value = value, -starts_with("Subject")) %>%
+  separate(item, c(NA, "item", NA), sep = "_") %>%
+  group_by(Subject, item) %>%
+  summarise(sum = sum(value)) %>%
+  ungroup() %>%
+  spread(key= item, value = sum)
 ```
 
 #Experiment II - Within-Subject Manipulation of both social (static stim) and liquid feedback
