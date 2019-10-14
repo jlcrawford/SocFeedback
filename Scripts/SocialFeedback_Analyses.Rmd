@@ -203,7 +203,7 @@ social.affect.anova
 
 #Liquid Feedback ANOVA (Word Valence x Motivational Valence)
 liquid.affect.anova<-ezANOVA((data = word.means.valence %>% filter(IncentiveType== "Liquid")), dv = meanRating, wid = .(Subject), within = c("Word_Valence","Valence"))
-kable(liquid.affect.anova)
+kable(liquid.affect.anova) #fix table
 liquid.affect.anova
 ```
 
