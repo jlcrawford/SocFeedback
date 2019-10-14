@@ -15,7 +15,7 @@ rm(list=ls())
 # load libraries
 library(kableExtra); library(ez); library(knitr); library(RColorBrewer); library(tidyverse); source("summarySEwithin2.R")
 # summarySEwithin2 function 
-source("~/Box Sync/Dynamic_Stim/3_Feedback/DynamicStim/Data/")
+source("https://github.com/jlcrawford/SocFeedback/blob/master/summarySEwithin2.R")
 ```
 
 ##Reward Rate Calculation
