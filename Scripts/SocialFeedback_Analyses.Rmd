@@ -101,7 +101,11 @@ L.mean.Err = mean(subset(val.inc.mon.means, IncentiveType=="Liquid")$meanErr)
 
 RR.sum<-summarySEwithin2(data = val.inc.mon.means, measurevar = "meanRR", withinvars = c("Valence","IncentiveType","moneyreward"), idvar = "Subject")
 RR.sum$Valence<-factor(x = RR.sum$Valence, levels=c("Positive","Neutral","Negative")) # change order of factors for axis labels
+```
 
+###Figure 2--Incentive Integration Effects across Social & Liquid Feedback
+
+``` {r RRplot1}
 #Plotting reward rate across Social + Liquid feedback by Valence and Monetary Reward (Figure 2)
 p.RR.Exp1<-ggplot(RR.sum, aes(x=Valence, y=meanRR, fill=moneyreward)) + 
   geom_bar(position=position_dodge(width=0.8), stat="identity", width=0.8) +
@@ -117,7 +121,11 @@ p.RR.Exp1<-ggplot(RR.sum, aes(x=Valence, y=meanRR, fill=moneyreward)) +
     strip.text.x = element_text(size = 12)) +
   facet_grid(.~IncentiveType)
 p.RR.Exp1
+```
 
+###ANOVA Tables--Monetary Reward x Feedback Valence x Incentive Session
+
+``` {r ANOVA_RR_E1}
 #Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
 omnibus.anova.E1<-ezANOVA(data = val.inc.mon.means, dv = meanRR, wid = .(Subject), within = c("Valence","IncentiveType","moneyreward"))
 kable(omnibus.anova.E1)
@@ -174,7 +182,11 @@ word.means.valence <- rbind(word.means.pos, word.means.neg)
 word.means.valence.sum <- summarySEwithin2(data=word.means.valence, measurevar = "meanRating", withinvars = c("Valence","Word_Valence","IncentiveType"), idvar = "Subject")
 word.means.valence.sum$Word_Valence <- factor(word.means.valence.sum$Word_Valence, levels = c("Positive", "Negative"))
 word.means.valence.sum$Valence <- factor(word.means.valence.sum$Valence , levels = c("Positive", "Neutral", "Negative"))
+```
 
+###Figure 3-Post-block Affect Ratings across Social & Liquid Feedback
+
+``` {r Affectplot}
 #Plot affect ratings (Figure 3)
 p.affect.valence <- ggplot(word.means.valence.sum, aes(x=Word_Valence, y=meanRating, fill=Valence)) +
   coord_cartesian(ylim = c(1,3.5)) +
@@ -189,7 +201,11 @@ p.affect.valence <- ggplot(word.means.valence.sum, aes(x=Word_Valence, y=meanRat
   xlab("Term Valence") + ylab("Affect Rating") +
   facet_grid(.~IncentiveType)
 p.affect.valence
+```
 
+###ANOVA Tables--Incentive Type x Affect Term Valence x Motivational Valence
+
+``` {r ANOVA_E1}
 #Testing for effects of incentive type, affect term valence, and the motivational valence of the stimuli on affect rating
 #Omnibus ANOVA (Incentive Type x Word Valence x Motivational Valence)
 affect.anova<-ezANOVA(data = word.means.valence, dv = meanRating, wid = .(Subject), within = c("Word_Valence","Valence","IncentiveType"))
@@ -207,7 +223,127 @@ kable(liquid.affect.anova) #fix table
 liquid.affect.anova
 ```
 
-##Self-Report Ratings (Supplemental Material)
+##Supplemental Material
+###Reward Rate Across Sessions & Incentive Modalities
+
+``` {r SessionDesc}
+{r OrderEffects_RR}
+#Summarizing Reward Rate, Accuracy, and RT by Session
+#First Session
+Session1.incentive <- feedback.merged %>% group_by(Subject,Session,IncentiveType,rewCode,CriterionRT) %>%
+  filter(!is.na(subRewarded)) %>% filter(Session == 7 | Session == 8 | Session == 9) %>%
+  dplyr::summarise(meanRR = mean(subRewarded), meanACC = mean(Target.ACC), meanErr = mean(subError), meanRT = mean(Target.RT)) %>%
+  mutate(Visit = "First")
+
+#Second Session
+Session2.incentive <- feedback.merged %>% group_by(Subject,Session,IncentiveType,rewCode,CriterionRT) %>%
+  filter(!is.na(subRewarded)) %>% filter(Session == 16 | Session == 17 | Session == 18) %>%
+  dplyr::summarise(meanRR = mean(subRewarded), meanACC = mean(Target.ACC), meanErr = mean(subError), meanRT = mean(Target.RT)) %>%
+  mutate(Visit = "Second")
+
+Session.RR <- rbind(Session1.incentive,Session2.incentive)
+
+RR.session.sum=summarySEwithin2(Session.RR, measurevar = "meanRR",
+                        withinvars = "IncentiveType", betweenvars = "Visit",
+                        idvar = "Subject")
+
+p.Session.RR <- ggplot(RR.session.sum, aes(x=IncentiveType, y=meanRR, fill=IncentiveType)) + 
+  theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "none") +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(position=position_dodge(width=0.9), aes(ymin=meanRR-ci, ymax=meanRR+ci), width=.2) +  
+  coord_cartesian(ylim=c(.3,.8)) + 
+  xlab("Incentive Type") + ylab("Reward Rate") +ggtitle("Reward Rate Across Study Visit") +
+  scale_fill_brewer(palette="Set1", name="Incentive Type") +
+  facet_grid(.~Visit)
+p.Session.RR
+
+
+#Summarizing Accuracy by Session
+ACC.session.sum=summarySEwithin2(Session.RR, measurevar = "meanACC",
+                        withinvars = "IncentiveType",betweenvars = "Visit",
+                        idvar = "Subject")
+
+p.Session.ACC <- ggplot(ACC.session.sum, aes(x=IncentiveType, y=meanACC, fill=IncentiveType)) + 
+  theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "none") +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(position=position_dodge(width=0.9), aes(ymin=meanACC-ci, ymax=meanACC+ci), width=.2) +  
+  coord_cartesian(ylim=c(.3,.9)) + 
+  xlab("Incentive Type") + ylab("Accuracy") +ggtitle("Accuracy Across Study Visit") +
+  scale_fill_brewer(palette="Set1", name="Incentive Type") +
+  facet_grid(.~Visit)
+p.Session.ACC
+
+#Summarizing RT by Session
+RT.session.sum=summarySEwithin2(Session.RR, measurevar = "meanRT",
+                        withinvars = "IncentiveType",betweenvars = "Visit",
+                        idvar = "Subject")
+
+p.Session.RT <- ggplot(RT.session.sum, aes(x=IncentiveType, y=meanRT, fill=IncentiveType)) + 
+  theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"), legend.position = "none") +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(position=position_dodge(width=0.9), aes(ymin=meanRT-ci, ymax=meanRT+ci), width=.2) +  
+  coord_cartesian(ylim=c(100,600)) + 
+  xlab("Incentive Type") + ylab("RT") +ggtitle("RT Across Study Visit") +
+  scale_fill_brewer(palette="Set1", name="Incentive Type") +
+  facet_grid(.~Visit)
+p.Session.RT
+
+reward.critRT <- group_by(Session.RR, IncentiveType,Visit,CriterionRT) %>%
+  dplyr::summarise(meanCritRT = mean(CriterionRT))
+
+  #Social Feedback MeanRR
+ t.test(x = subset(Session.RR, IncentiveType=="Social" & Visit=="First")$meanRR,
+       y = subset(Session.RR, IncentiveType=="Social" & Visit=="Second")$meanRR,
+       paired = FALSE)
+  #Liquid Feedback MeanRR
+t.test(x = subset(Session.RR, IncentiveType=="Liquid" & Visit=="First")$meanRR,
+       y = subset(Session.RR, IncentiveType=="Liquid" & Visit=="Second")$meanRR,
+       paired = FALSE)
+  #Session 1 MeanRR
+t.test(x = subset(Session.RR, IncentiveType=="Social" & Visit=="First")$meanRR,
+       y = subset(Session.RR, IncentiveType=="Liquid" & Visit=="First")$meanRR,
+       paired = FALSE) 
+  #Session 2 MeanRR
+t.test(x = subset(Session.RR, IncentiveType=="Social" & Visit=="Second")$meanRR,
+       y = subset(Session.RR, IncentiveType=="Liquid" & Visit=="Second")$meanRR,
+       paired = FALSE) 
+
+#Social RT
+t.test(x = subset(Session.RR, IncentiveType=="Social" & Visit=="First")$meanRT,
+       y = subset(Session.RR, IncentiveType=="Social" & Visit=="Second")$meanRT,
+       paired = FALSE)
+  #Liquid RT
+t.test(x = subset(Session.RR, IncentiveType=="Liquid" & Visit=="First")$meanRT,
+       y = subset(Session.RR, IncentiveType=="Liquid" & Visit=="Second")$meanRT,
+       paired = FALSE)
+  #Session 1 RT
+t.test(x = subset(Session.RR, IncentiveType=="Social" & Visit=="First")$meanRT,
+       y = subset(Session.RR, IncentiveType=="Liquid" & Visit=="First")$meanRT,
+       paired = FALSE) 
+  #Session 2 RT
+t.test(x = subset(Session.RR, IncentiveType=="Social" & Visit=="Second")$meanRT,
+       y = subset(Session.RR, IncentiveType=="Liquid" & Visit=="Second")$meanRT,
+       paired = FALSE) 
+
+  #Social CritRT
+t.test(x = subset(reward.critRT, IncentiveType=="Social" & Visit=="First")$CriterionRT,
+       y = subset(reward.critRT, IncentiveType=="Social" & Visit=="Second")$CriterionRT,
+       paired = FALSE)
+  #Liquid CritRT
+t.test(x = subset(reward.critRT, IncentiveType=="Liquid" & Visit=="First")$CriterionRT,
+       y = subset(reward.critRT, IncentiveType=="Liquid" & Visit=="Second")$CriterionRT,
+       paired = FALSE)
+  #Session 1 CritRT
+t.test(x = subset(reward.critRT, IncentiveType=="IncentiveType" & Visit=="First")$CriterionRT,
+       y = subset(reward.critRT, IncentiveType=="Liquid" & Visit=="First")$CriterionRT,
+       paired = FALSE) 
+  #Session 2 CritRT
+t.test(x = subset(reward.critRT, IncentiveType=="Social" & Visit=="Second")$CriterionRT,
+       y = subset(reward.critRT, IncentiveType=="Liquid" & Visit=="Second")$CriterionRT,
+       paired = FALSE) 
+```
+
+###Self-Report Data
 
 ``` {r SelfReport}
 # Import Self-Report Data
@@ -275,17 +411,14 @@ p.motivation.sf.lf
 
 #Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
 anova.motive.E1<-ezANOVA(data = data.motivation.sf.lf, dv = rating, wid = .(Subject), within = c("Valence","IncentiveType","money"))
-kable(anova.motive.E1)
 anova.motive.E1
 
 #Social Feedback ANOVA (Valence x Monetary Reward)
 social.anova.motive.E1<-ezANOVA((data = data.motivation.sf.lf %>% filter(IncentiveType == "Social")), dv = rating, wid = .(Subject), within = c("Valence","money"))
-kable(social.anova.motive.E1)
 social.anova.motive.E1
 
 #Liquid Feedback ANOVA (Valence x Monetary Reward)
 liquid.anova.motive.E1<-ezANOVA((data = data.motivation.sf.lf %>% filter(IncentiveType == "Liquid")), dv = rating, wid = .(Subject), within = c("Valence","money"))
-kable(liquid.anova.motive.E1)
 liquid.anova.motive.E1
 
 #Liking Ratings
@@ -349,17 +482,14 @@ p.liking.sf.lf
 
 #Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
 anova.liking.E1<-ezANOVA(data = data.liking.sf.lf, dv = rating, wid = .(Subject), within = c("Valence","IncentiveType","money"))
-kable(anova.liking.E1)
 anova.liking.E1
 
 #Social Feedback ANOVA (Valence x Monetary Reward)
 social.anova.liking.E1<-ezANOVA((data = data.liking.sf.lf %>% filter(IncentiveType == "Social")), dv = rating, wid = .(Subject), within = c("Valence","money"))
-kable(social.anova.liking.E1)
 social.anova.liking.E1
 
 #Liquid Feedback ANOVA (Valence x Monetary Reward)
 liquid.anova.liking.E1<-ezANOVA((data = data.liking.sf.lf %>% filter(IncentiveType == "Liquid")), dv = rating, wid = .(Subject), within = c("Valence","money"))
-kable(liquid.anova.liking.E1)
 liquid.anova.liking.E1
 
 #BISBAS
