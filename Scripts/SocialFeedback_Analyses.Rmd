@@ -3,12 +3,13 @@ title: "Social Feedback Paper"
 author: "Jennifer Crawford"
 date: "10.13.19"
 output: 
-  html_document: 
+  html_document:
+    code_folding: "hide"
 urlcolor: blue
 ---
 #Experiment I - Within-Subject Manipulation of both social (dynamic stim) and liquid feedback
 
-``` {r libraries}
+``` {r libraries, message = F, warning = F}
 # Clear workspace
 rm(list=ls())
 # load libraries
@@ -19,7 +20,7 @@ source("https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/summaryS
 
 ##Reward Rate Calculation
 
-``` {r RR_SFLF, echo = TRUE}
+``` {r RR_SFLF, echo = TRUE, message = F, warning = F}
 #Import Data
 data.path.sf <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment1/Data/SF_merged_FINAL.csv"
 data.path.lf <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment1/Data/LF_merged_FINAL.csv"
@@ -105,7 +106,7 @@ RR.sum$Valence<-factor(x = RR.sum$Valence, levels=c("Positive","Neutral","Negati
 
 ###Figure 2--Incentive Integration Effects across Social & Liquid Feedback
 
-``` {r RRplot1}
+``` {r RRplot1, message = F, warning = F}
 #Plotting reward rate across Social + Liquid feedback by Valence and Monetary Reward (Figure 2)
 p.RR.Exp1<-ggplot(RR.sum, aes(x=Valence, y=meanRR, fill=moneyreward)) + 
   geom_bar(position=position_dodge(width=0.8), stat="identity", width=0.8) +
@@ -125,26 +126,41 @@ p.RR.Exp1
 
 ###ANOVA Tables--Monetary Reward x Feedback Valence x Incentive Session
 
-``` {r ANOVA_RR_E1}
+``` {r ANOVA_RR_E1, message = F, warning = F}
 #Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
 omnibus.anova.E1<-ezANOVA(data = val.inc.mon.means, dv = meanRR, wid = .(Subject), within = c("Valence","IncentiveType","moneyreward"))
-kable(omnibus.anova.E1)
-omnibus.anova.E1
-
+d.anova.E1 <- omnibus.anova.E1$ANOVA %>%
+  mutate(Effect = factor(Effect, levels = c("Valence","IncentiveType","moneyreward","Valence:IncentiveType",
+                                            "Valence:moneyreward","IncentiveType:moneyreward","Valence:IncentiveType:moneyreward"),
+                         labels = c("Valence","Incentive Type","Monetary Reward","Valence x Incentive Type","Valence x Monetary Reward",
+                                    "Incentive Type x Monetary Reward", "Valence x Incentive Type x Monetary Reward"))) %>%
+  rename("Generalized Eta Squared" = ges)
+tab.omnibus.E1 <- kable(d.anova.E1, format = "html", digits = 3, caption = "Monetary Reward x Feedback Valence x Incentive Session -- Experiment I") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+tab.omnibus.E1
+      
 #Social Feedback ANOVA (Valence x Monetary Reward)
 social.anova.E1<-ezANOVA((data = val.inc.mon.means %>% filter(IncentiveType== "Social")), dv = meanRR, wid = .(Subject), within = c("Valence","moneyreward"))
-kable(social.anova.E1)
-social.anova.E1
+d.soc.anova.E1 <- social.anova.E1$ANOVA %>%
+  mutate(Effect = factor(Effect, levels = c("Valence","moneyreward","Valence:moneyreward"),
+                         labels = c("Valence","Monetary Reward","Valence x Monetary Reward")))
+tab.soc.E1 <- kable(d.soc.anova.E1, caption = "Social Feedback ANOVA (Valence x Monetary Reward") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+tab.soc.E1
 
 #Liquid Feedback ANOVA (Valence x Monetary Reward)
 liquid.anova.E1<-ezANOVA((data = val.inc.mon.means %>% filter(IncentiveType== "Liquid")), dv = meanRR, wid = .(Subject), within = c("Valence","moneyreward"))
-kable(liquid.anova.E1)
-liquid.anova.E1
+d.liq.anova.E1 <-liquid.anova.E1$ANOVA %>%
+  mutate(Effect = factor(Effect, levels = c("Valence","moneyreward","Valence:moneyreward"),
+                         labels = c("Valence","Monetary Reward","Valence x Monetary Reward")))
+tab.liq.E1 <- kable(d.liq.anova.E1, caption = "Liquid Feedback ANOVA (Valence x Monetary Reward") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+tab.liq.E1
 ```
 
 ##Affect Ratings
 
-``` {r AffectRatings}
+``` {r AffectRatings, message = F, warning = F}
 # Format Affect Rating Data
 affect.sf <- read.csv(data.path.sf, header = TRUE) %>% select(Subject, Trial, Condition, Feeling, Ratings.RESP, Ratings.RT, Procedure.Trial.) %>%
   mutate(IncentiveType="Social", 
@@ -186,7 +202,7 @@ word.means.valence.sum$Valence <- factor(word.means.valence.sum$Valence , levels
 
 ###Figure 3-Post-block Affect Ratings across Social & Liquid Feedback
 
-``` {r Affectplot}
+``` {r Affectplot, message = F, warning = F}
 #Plot affect ratings (Figure 3)
 p.affect.valence <- ggplot(word.means.valence.sum, aes(x=Word_Valence, y=meanRating, fill=Valence)) +
   coord_cartesian(ylim = c(1,3.5)) +
@@ -205,29 +221,42 @@ p.affect.valence
 
 ###ANOVA Tables--Incentive Type x Affect Term Valence x Motivational Valence
 
-``` {r ANOVA_E1}
+``` {r ANOVA_E1, message = F, warning = F}
 #Testing for effects of incentive type, affect term valence, and the motivational valence of the stimuli on affect rating
 #Omnibus ANOVA (Incentive Type x Word Valence x Motivational Valence)
 affect.anova<-ezANOVA(data = word.means.valence, dv = meanRating, wid = .(Subject), within = c("Word_Valence","Valence","IncentiveType"))
-kable(affect.anova)
-affect.anova
+affect.anova.E1 <- affect.anova$ANOVA %>%
+    mutate(Effect = factor(Effect, levels = c("Word_Valence","Valence","IncentiveType","Word_Valence:Valence","Word_Valence:IncentiveType",
+                                              "Valence:IncentiveType","Word_Valence:Valence:IncentiveType"),
+            labels = c("Affect Term Valence","Motivational Valence","Incentive Type", "Affect Term Valence x Motivational Valence",
+                      "Affect Term Valence x Incentive Type", "Motivational Valence x Incentive Type","Affect Term Valence x Motivational Valence x Incentive Type")))
+tab.affect <- kable(affect.anova.E1, caption = "Omnibus ANOVA (Incentive Type x Word Valence x Motivational Valence)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+tab.affect
 
 #Social Feedback ANOVA (Word Valence x Motivational Valence)
 social.affect.anova<-ezANOVA((data = word.means.valence %>% filter(IncentiveType== "Social")), dv = meanRating, wid = .(Subject), within = c("Word_Valence","Valence"))
-kable(social.affect.anova)
-social.affect.anova
+affect.soc.anova.E1 <- social.affect.anova$ANOVA %>%
+  mutate(Effect = factor(Effect, levels = c("Word_Valence","Valence","Word_Valence:Valence"),
+                         labels = c("Affect Term Valence","Motivational Valence","Affect Term Valence x Motivational Valence")))
+tab.soc.affect <- kable(affect.soc.anova.E1, caption = "Social Feedback ANOVA (Word Valence x Motivational Valence)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+tab.soc.affect
 
 #Liquid Feedback ANOVA (Word Valence x Motivational Valence)
 liquid.affect.anova<-ezANOVA((data = word.means.valence %>% filter(IncentiveType== "Liquid")), dv = meanRating, wid = .(Subject), within = c("Word_Valence","Valence"))
-kable(liquid.affect.anova) #fix table
-liquid.affect.anova
+affect.liq.anova.E1 <-liquid.affect.anova$ANOVA %>%
+    mutate(Effect = factor(Effect, levels = c("Word_Valence","Valence","Word_Valence:Valence"),
+                         labels = c("Affect Term Valence","Motivational Valence","Affect Term Valence x Motivational Valence")))
+tab.liq.affect <- kable(affect.liq.anova.E1, caption = "Liquid Feedback ANOVA (Word Valence x Motivational Valence)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+tab.liq.affect
 ```
 
 ##Supplemental Material
 ###Reward Rate Across Sessions & Incentive Modalities
 
-``` {r SessionDesc}
-{r OrderEffects_RR}
+``` {r SessionDesc, message = F, warning = F}
 #Summarizing Reward Rate, Accuracy, and RT by Session
 #First Session
 Session1.incentive <- feedback.merged %>% group_by(Subject,Session,IncentiveType,rewCode,CriterionRT) %>%
@@ -334,7 +363,7 @@ t.test(x = subset(reward.critRT, IncentiveType=="Liquid" & Visit=="First")$Crite
        y = subset(reward.critRT, IncentiveType=="Liquid" & Visit=="Second")$CriterionRT,
        paired = FALSE)
   #Session 1 CritRT
-t.test(x = subset(reward.critRT, IncentiveType=="IncentiveType" & Visit=="First")$CriterionRT,
+t.test(x = subset(reward.critRT, IncentiveType=="Social" & Visit=="First")$CriterionRT,
        y = subset(reward.critRT, IncentiveType=="Liquid" & Visit=="First")$CriterionRT,
        paired = FALSE) 
   #Session 2 CritRT
@@ -345,7 +374,7 @@ t.test(x = subset(reward.critRT, IncentiveType=="Social" & Visit=="Second")$Crit
 
 ###Self-Report Data
 
-``` {r SelfReport}
+``` {r SelfReport, message = F, warning = F}
 # Import Self-Report Data
 data.path.selfreport <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment1/Data/SFLF_SelfReport.csv"
 data.post.task <- read.csv(data.path.selfreport, header = TRUE)
@@ -514,7 +543,7 @@ DARS <- data.post.task %>% select(Subject, starts_with("dars")) %>% select(-"dar
 
 #Experiment II - Within-Subject Manipulation of both social (static stim) and liquid feedback
 
-``` {r importE2}
+``` {r importE2, message = F, warning = F}
 #import data paths from github
 data.path <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment2/Data/Data_Reward.csv"
 baseline.path<-"https://raw.githubusercontent.com/jlcrawford/SocFeedback/master/Experiment2/Data/Data_Baseline.csv"
@@ -525,7 +554,7 @@ ratings.soc.path <- "https://raw.githubusercontent.com/jlcrawford/SocFeedback/ma
 
 ##Formatting the Data
 
-```{r Formatting}
+```{r Formatting, message = F, warning = F}
 # Reading the data
 data<-read.csv(data.path,header=TRUE, sep = ",") %>% select(-X)
 data.base<-read.csv(baseline.path, header = TRUE, sep  = ",") %>% select(-X)
@@ -552,7 +581,7 @@ data$incentiveCode <- as.numeric(levels(data$incentiveCode)[data$incentiveCode])
 
 ##Reward Rate Calculation
 
-```{r RR_Exp2}
+```{r RR_Exp2, message = F, warning = F}
 # Group by face vs liquid
 data.incentive.means = group_by(data, subID, IncentiveType) %>% filter(!is.na(subRewarded)) %>%
   dplyr::summarise(n=n(), meanRR = mean(subRewarded), meanACC = mean(ACC), meanErr = mean(subError))
@@ -602,7 +631,11 @@ t.test(x = subset(data.val.inc.mon.means, IncentiveType=="Social")$meanErr,
        paired = TRUE)
 S.mean.Err.2 = mean(subset(data.val.inc.mon.means, IncentiveType=="Social")$meanErr)
 L.mean.Err.2 = mean(subset(data.val.inc.mon.means, IncentiveType=="Liquid")$meanErr)
+```
 
+###Figure 4--Incentive Integration Effects across Social & Liquid Feedback (Experiment II)
+
+``` {r RRplotE2, message = F, warning = F}
 #Plotting reward rate across Social + Liquid feedback by Valence and Monetary Reward (Figure 4)
 p.RR.Exp2<-ggplot(RR.sum.2, aes(x=Valence, y=meanRR, fill=moneyreward)) + 
   geom_bar(position=position_dodge(width=0.8), stat="identity", width=0.8) +
@@ -618,26 +651,45 @@ p.RR.Exp2<-ggplot(RR.sum.2, aes(x=Valence, y=meanRR, fill=moneyreward)) +
     strip.text.x = element_text(size = 12)) +
   facet_grid(.~IncentiveType)
 p.RR.Exp2
+```
 
+###ANOVA Tables--Experiment II
+
+``` {r ANOVAs_E2, message = F, warning = F}
 #Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
-omnibus.anova.E2<-ezANOVA(data = data.val.inc.mon.means, dv = meanRR, wid = .(subID), within = c("Valence","IncentiveType","moneyreward"))
-kable(omnibus.anova.E2)
-omnibus.anova.E2
-
+omnibus.anova.E2<-ezANOVA(data = val.inc.mon.means, dv = meanRR, wid = .(Subject), within = c("Valence","IncentiveType","moneyreward"))
+d.anova.E2 <- omnibus.anova.E2$ANOVA %>%
+  mutate(Effect = factor(Effect, levels = c("Valence","IncentiveType","moneyreward","Valence:IncentiveType",
+                                            "Valence:moneyreward","IncentiveType:moneyreward","Valence:IncentiveType:moneyreward"),
+                         labels = c("Valence","Incentive Type","Monetary Reward","Valence x Incentive Type","Valence x Monetary Reward",
+                                    "Incentive Type x Monetary Reward", "Valence x Incentive Type x Monetary Reward"))) %>%
+  rename("Generalized Eta Squared" = ges)
+tab.omnibus.E2 <- kable(d.anova.E2, format = "html", digits = 3, caption = "Monetary Reward x Feedback Valence x Incentive Session -- Experiment I") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+tab.omnibus.E2
+      
 #Social Feedback ANOVA (Valence x Monetary Reward)
-social.anova.E2<-ezANOVA((data = data.val.inc.mon.means %>% filter(IncentiveType== "Social")), dv = meanRR, wid = .(subID), within = c("Valence","moneyreward"))
-kable(social.anova.E2)
-social.anova.E2
+social.anova.E2<-ezANOVA((data = val.inc.mon.means %>% filter(IncentiveType== "Social")), dv = meanRR, wid = .(Subject), within = c("Valence","moneyreward"))
+d.soc.anova.E2 <- social.anova.E2$ANOVA %>%
+  mutate(Effect = factor(Effect, levels = c("Valence","moneyreward","Valence:moneyreward"),
+                         labels = c("Valence","Monetary Reward","Valence x Monetary Reward")))
+tab.soc.E2 <- kable(d.soc.anova.E2, caption = "Social Feedback ANOVA (Valence x Monetary Reward") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+tab.soc.E2
 
 #Liquid Feedback ANOVA (Valence x Monetary Reward)
-liquid.anova.E2<-ezANOVA((data = data.val.inc.mon.means %>% filter(IncentiveType== "Liquid")), dv = meanRR, wid = .(subID), within = c("Valence","moneyreward"))
-kable(liquid.anova.E2)
-liquid.anova.E2
+liquid.anova.E2<-ezANOVA((data = val.inc.mon.means %>% filter(IncentiveType== "Liquid")), dv = meanRR, wid = .(Subject), within = c("Valence","moneyreward"))
+d.liq.anova.E2 <-liquid.anova.E2$ANOVA %>%
+  mutate(Effect = factor(Effect, levels = c("Valence","moneyreward","Valence:moneyreward"),
+                         labels = c("Valence","Monetary Reward","Valence x Monetary Reward")))
+tab.liq.E2 <- kable(d.liq.anova.E2, caption = "Liquid Feedback ANOVA (Valence x Monetary Reward") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+tab.liq.E2
 ```
 
 ##Self-Report Data (Supplemental Material)
 
-``` {r SelfReport_Exp2}
+``` {r SelfReport_Exp2, message = F, warning = F}
 # Self-Report Ratings for Liquid and Social Incentive Types
 # LIQUID
 data.ratings.liquid<-read.csv(file = ratings.liq.path, sep=",")
