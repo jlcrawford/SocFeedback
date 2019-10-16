@@ -151,7 +151,7 @@ p.RR.Exp1<-ggplot(RR.sum, aes(x=Valence, y=meanRR, fill=moneyreward)) +
 p.RR.Exp1
 ```
 
-###ANOVA Tables--Monetary Reward x Feedback Valence x Incentive Session
+###ANOVA Tables: Monetary Reward x Feedback Valence x Incentive Session
 
 ``` {r ANOVA_RR_E1, message = F, warning = F}
 #Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
@@ -229,7 +229,7 @@ word.means.valence.sum$Word_Valence <- factor(word.means.valence.sum$Word_Valenc
 word.means.valence.sum$Valence <- factor(word.means.valence.sum$Valence , levels = c("Positive", "Neutral", "Negative"))
 ```
 
-###Figure 3:Post-block Affect Ratings Across Social & Liquid Feedback Conditions
+###Figure 3: Post-block Affect Ratings Across Social & Liquid Feedback Conditions
 
 ``` {r Affectplot, message = F, warning = F}
 #Plot affect ratings (Figure 3)
@@ -248,7 +248,7 @@ p.affect.valence <- ggplot(word.means.valence.sum, aes(x=Word_Valence, y=meanRat
 p.affect.valence
 ```
 
-###ANOVA Tables--Incentive Type x Affect Term Valence x Motivational Valence
+###ANOVA Tables: Incentive Type x Affect Term Valence x Motivational Valence
 
 ``` {r ANOVA_E1, message = F, warning = F}
 #Testing for effects of incentive type, affect term valence, and the motivational valence of the stimuli on affect rating
@@ -317,6 +317,23 @@ p.Session.RR <- ggplot(RR.session.sum, aes(x=IncentiveType, y=meanRR, fill=Incen
   scale_fill_brewer(palette="Set1", name="Incentive Type") +
   facet_grid(.~Visit)
 p.Session.RR
+
+reward_crit_low<-qbinom(p = .025, size = 96, prob = .3)/96
+reward_crit_high<-qbinom(p = .975, size = 96, prob = .3)/96
+
+p.Session.RR.ind <- ggplot(data = RR.session.sum, aes(x=IncentiveType, y=meanRR)) +
+           geom_bar(stat="identity", position=position_dodge()) + 
+  geom_errorbar(data = RR.session.sum, position=position_dodge(width=0.9), aes(ymin=meanRR-ci, ymax=meanRR+ci), width=.2) +
+  geom_point(data = incentive.means, aes(x=IncentiveType, y=meanRR),
+             stat="identity", position=position_jitter(w=.3), alpha=0.5) +
+  geom_hline(yintercept = .3, color="darkorchid4") +
+  geom_hline(yintercept = reward_crit_low, color="darkorchid4", linetype="dashed") +
+  geom_hline(yintercept = reward_crit_high, color="darkorchid4", linetype="dashed") +
+  geom_rect(mapping = aes(xmin=.4,xmax=3,ymin=reward_crit_low,ymax=reward_crit_high), fill="darkorchid4", alpha=0.05) +
+   theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  coord_cartesian(ylim=c(.2,.95)) +
+  xlab("Incentive Type") + ylab("Reward Rate") + ggtitle("Reward Rate by Incentive Type")
+p.Session.RR.ind
 
 
 #Summarizing Accuracy by Session
@@ -559,6 +576,7 @@ BISBAS <- data.post.task %>% select(Subject, starts_with("bisbas")) %>% select(-
   summarise(sum = sum(value)) %>%
   ungroup() %>%
   spread(key= trait, value = sum)
+
 
 #DARS
 DARS <- data.post.task %>% select(Subject, starts_with("dars")) %>% select(-"dars_complete") %>% select(-contains("_desc")) %>%
