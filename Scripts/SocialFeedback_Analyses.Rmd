@@ -76,8 +76,10 @@ money.inc.means = group_by(feedback.merged, Subject, moneyreward, IncentiveType)
   dplyr::summarise(n=n(), meanRR = mean(subRewarded), meanACC = mean(Target.ACC), meanErr = mean(subError))
 
 val.inc.mon.means = group_by(feedback.merged, Subject, Valence,IncentiveType,moneyreward) %>% filter(!is.na(subRewarded)) %>%
-  dplyr::summarise(n=n(), meanRR = mean(subRewarded), meanACC = mean(Target.ACC), meanErr = mean(subError))
-
+  dplyr::summarise(n=n(), meanRR = mean(subRewarded), sdRR = sd(subRewarded), meanACC = mean(Target.ACC), sdACC = sd(Target.ACC),
+                   meanErr = mean(subError), sdErr = sd(subError))
+val.inc.mon.RTmeans = group_by(feedback.merged, Subject, Valence, IncentiveType,moneyreward) %>% filter(!is.na(subRewarded) & Target.ACC==1) %>%
+  dplyr::summarise(n=n(), meanRT = mean(Target.RT))
 val.inc.mon.means<-data.frame(val.inc.mon.means)
 
 #Reward Rate Difference Across Social and Liquid Feedback
@@ -101,14 +103,38 @@ t.test(x = subset(incentive.means, IncentiveType=="Social")$meanErr,
 S.mean.Err = mean(subset(incentive.means, IncentiveType=="Social")$meanErr)
 L.mean.Err = mean(subset(incentive.means, IncentiveType=="Liquid")$meanErr)
 
+#Summary Table of Rewrard Rate, Accuracy, Error Rate, and RT
 RR.sum<-summarySEwithin2(data = val.inc.mon.means, measurevar = "meanRR", withinvars = c("Valence","IncentiveType","moneyreward"), idvar = "Subject")
-RR.sum$Valence<-factor(x = RR.sum$Valence, levels=c("Positive","Neutral","Negative")) # change order of factors for axis labels
+ACC.sum <-summarySEwithin2(data = val.inc.mon.means, measurevar = "meanACC", withinvars = c("Valence","IncentiveType","moneyreward"), idvar = "Subject") %>%
+  rename("ACC_mean" =  meanACC,
+         "ACC_ci" = ci, 
+         "ACC_sd" = sd) %>%
+  select(ACC_mean, ACC_ci, ACC_sd)
+
+Err.sum <- summarySEwithin2(data = val.inc.mon.means, measurevar = "meanErr", withinvars = c("Valence","IncentiveType","moneyreward"), idvar = "Subject") %>%
+   rename("Err_mean" = meanErr,
+         "Err_ci" = ci, 
+         "Err_sd" = sd) %>%
+  select(Err_mean, Err_ci, Err_sd)
+
+RT.sum <- summarySEwithin2(data = val.inc.mon.RTmeans, measurevar = "meanRT", withinvars = c("Valence","IncentiveType","moneyreward"), idvar = "Subject") %>%
+   rename("RT_mean" = meanRT,
+         "RT_ci" = ci, 
+         "RT_sd" = sd) %>%
+  select(RT_mean, RT_ci, RT_sd)
+
+summary.table <- cbind(RR.sum,ACC.sum, Err.sum, RT.sum) %>%
+  rename("RR_mean" = meanRR,
+         "RR_ci" = ci, 
+         "RR_sd" = sd) %>%
+  select(-c("N","meanRRNormed","se"))
 ```
 
 ###Figure 2: Incentive Integration Effects across Social & Liquid Feedback
 
 ``` {r RRplot1, message = F, warning = F}
 #Plotting reward rate across Social + Liquid feedback by Valence and Monetary Reward (Figure 2)
+RR.sum$Valence<-factor(x = RR.sum$Valence, levels=c("Positive","Neutral","Negative")) # change order of factors for axis labels
 p.RR.Exp1<-ggplot(RR.sum, aes(x=Valence, y=meanRR, fill=moneyreward)) + 
   geom_bar(position=position_dodge(width=0.8), stat="identity", width=0.8) +
   geom_errorbar(position=position_dodge(width=0.8), aes(ymin=meanRR-ci, ymax=meanRR+ci), width=.2) +
@@ -446,15 +472,12 @@ p.motivation.sf.lf
 
 #Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
 anova.motive.E1<-ezANOVA(data = data.motivation.sf.lf, dv = rating, wid = .(Subject), within = c("Valence","IncentiveType","money"))
-anova.motive.E1
 
 #Social Feedback ANOVA (Valence x Monetary Reward)
 social.anova.motive.E1<-ezANOVA((data = data.motivation.sf.lf %>% filter(IncentiveType == "Social")), dv = rating, wid = .(Subject), within = c("Valence","money"))
-social.anova.motive.E1
 
 #Liquid Feedback ANOVA (Valence x Monetary Reward)
 liquid.anova.motive.E1<-ezANOVA((data = data.motivation.sf.lf %>% filter(IncentiveType == "Liquid")), dv = rating, wid = .(Subject), within = c("Valence","money"))
-liquid.anova.motive.E1
 
 #Liking Ratings
 #Social Feedback
@@ -515,17 +538,17 @@ p.liking.sf.lf<-ggplot(data = data.liking.sf.lf.sum, aes(x = Valence, y = rating
   facet_grid(.~IncentiveType)
 p.liking.sf.lf
 
+#Summary of Liking Ratings
+
+
 #Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
 anova.liking.E1<-ezANOVA(data = data.liking.sf.lf, dv = rating, wid = .(Subject), within = c("Valence","IncentiveType","money"))
-anova.liking.E1
 
 #Social Feedback ANOVA (Valence x Monetary Reward)
 social.anova.liking.E1<-ezANOVA((data = data.liking.sf.lf %>% filter(IncentiveType == "Social")), dv = rating, wid = .(Subject), within = c("Valence","money"))
-social.anova.liking.E1
 
 #Liquid Feedback ANOVA (Valence x Monetary Reward)
 liquid.anova.liking.E1<-ezANOVA((data = data.liking.sf.lf %>% filter(IncentiveType == "Liquid")), dv = rating, wid = .(Subject), within = c("Valence","money"))
-liquid.anova.liking.E1
 
 #BISBAS
 BISBAS <- data.post.task %>% select(Subject, starts_with("bisbas")) %>% select(-"bisbas_complete") %>%
@@ -611,11 +634,14 @@ data.money.inc.means = group_by(data, subID, moneyreward, IncentiveType) %>% fil
   dplyr::summarise(n=n(), meanRR = mean(subRewarded), meanACC = mean(ACC), meanErr = mean(subError))
 
 data.val.inc.mon.means = group_by(data, subID, Valence,IncentiveType,moneyreward) %>% filter(!is.na(subRewarded)) %>%
-  dplyr::summarise(n=n(), meanRR = mean(subRewarded), meanACC = mean(ACC), meanErr = mean(subError))
+  dplyr::summarise(n=n(), meanRR = mean(subRewarded, na.rm = T), sdRR = sd(subRewarded, na.rm = T), meanACC = mean(ACC, na.rm = T), sdACC = sd(ACC, na.rm = T), meanErr = mean(subError, na.rm = T), sdErr = sd(subError, na.rm = T))
 data.val.inc.mon.means<-data.frame(data.val.inc.mon.means)
 RR.sum.2<-summarySEwithin2(data = data.val.inc.mon.means, measurevar = "meanRR", withinvars = c("Valence","IncentiveType","moneyreward"), idvar = "subID")
 RR.sum.2$Valence<-factor(x = RR.sum.2$Valence, levels=c("Positive","Neutral","Negative")) # change order of factors
 RR.sum.2$IncentiveType<-factor(x = RR.sum.2$IncentiveType, levels=c("Liquid","Social")) 
+
+table.means.2 = group_by(data.val.inc.mon.means, Valence, IncentiveType, moneyreward) %>%
+  dplyr::summarise(n=n(), mean.RR = mean(meanRR), sd.RR = mean(sdRR), mean.ACC = mean(meanACC), sd.ACC = mean(sdACC), mean.Err = mean(meanErr), sd.Err = mean(sdErr))
 
 #Reward Rate Difference Across Social and Liquid Feedback
 t.test(x = subset(data.incentive.means, IncentiveType=="Social")$meanRR,
@@ -711,7 +737,7 @@ data.liq.valence<-gather(data = data.liq.valence, key = valence, value = liking_
   separate(col = valence, into = c("liquid","misc"), sep = "_") %>%
   select(-misc) %>%
   mutate(Valence = factor(liquid, levels = c("Juice","Neutral","Salt"), 
-                          labels = c("appetitive","neutral","aversive")))
+                          labels = c("Positive","Neutral","Negative")))
 # 3 liquid intensity ratings
 data.liq.intensity<-select(data.ratings.liquid, subID,
                      Juice_Intensity,Neutral_Intensity,Salt_Intensity)
@@ -753,7 +779,7 @@ data.soc.valence<-gather(data = data.soc.valence, key = valence, value = liking_
   separate(col = valence, into = c("face","misc"), sep = "_") %>%
   select(-misc) %>%
   mutate(Valence = factor(face, levels = c("HappyFace","NeutralFace","SadFace"), 
-                          labels = c("appetitive","neutral","aversive")))
+                          labels = c("Positive","Neutral","Negative")))
 ```
 
 
