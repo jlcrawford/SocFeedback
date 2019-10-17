@@ -321,9 +321,13 @@ p.Session.RR
 reward_crit_low<-qbinom(p = .025, size = 96, prob = .3)/96
 reward_crit_high<-qbinom(p = .975, size = 96, prob = .3)/96
 
-p.Session.RR.ind <- ggplot(data = RR.session.sum, aes(x=IncentiveType, y=meanRR)) +
+m.RR.sum=summarySEwithin2(Session.RR, measurevar = "meanRR",
+                        withinvars = "IncentiveType",
+                        idvar = "Subject")
+
+p.Session.RR.ind <- ggplot(data = m.RR.sum, aes(x=IncentiveType, y=meanRR)) +
            geom_bar(stat="identity", position=position_dodge()) + 
-  geom_errorbar(data = RR.session.sum, position=position_dodge(width=0.9), aes(ymin=meanRR-ci, ymax=meanRR+ci), width=.2) +
+  geom_errorbar(data = m.RR.sum, position=position_dodge(width=0.9), aes(ymin=meanRR-ci, ymax=meanRR+ci), width=.2) +
   geom_point(data = incentive.means, aes(x=IncentiveType, y=meanRR),
              stat="identity", position=position_jitter(w=.3), alpha=0.5) +
   geom_hline(yintercept = .3, color="darkorchid4") +
@@ -334,7 +338,6 @@ p.Session.RR.ind <- ggplot(data = RR.session.sum, aes(x=IncentiveType, y=meanRR)
   coord_cartesian(ylim=c(.2,.95)) +
   xlab("Incentive Type") + ylab("Reward Rate") + ggtitle("Reward Rate by Incentive Type")
 p.Session.RR.ind
-
 
 #Summarizing Accuracy by Session
 ACC.session.sum=summarySEwithin2(Session.RR, measurevar = "meanACC",
@@ -573,19 +576,38 @@ BISBAS <- data.post.task %>% select(Subject, starts_with("bisbas")) %>% select(-
   separate(item, c(NA, "trait"), sep = "_") %>%
   separate(trait, sep = -1, into = c("trait", NA)) %>%
   group_by(Subject, trait) %>%
-  summarise(sum = sum(value)) %>%
+  summarise(sum = sum(value, na.rm = T)) %>%
   ungroup() %>%
-  spread(key= trait, value = sum)
-
+  spread(key= trait, value = sum) %>%
+  rename("BAS_Drive" = d, 
+         "BAS_Fun" = f,
+         "BAS_Reward" = rr, 
+         "BIS" = bis) %>%
+  mutate(BAS_total = (BAS_Drive + BAS_Fun + BAS_Reward))
+BISBAS.means <- BISBAS %>%
+  dplyr::summarise(mean_Reward = mean(BAS_Reward), sd_Reward = sd(BAS_Reward), mean_Fun = mean(BAS_Fun), sd_Fun = sd(BAS_Fun), 
+                   mean_Drive = mean(BAS_Reward), sd_Drive = sd(BAS_Drive), mean_BIS = mean(BIS), sd_BIS = sd(BIS)) %>%
+  kable(format = "html", caption = "BIS/BAS Means") %>%
+  kable_styling(full_width = F)
 
 #DARS
 DARS <- data.post.task %>% select(Subject, starts_with("dars")) %>% select(-"dars_complete") %>% select(-contains("_desc")) %>%
   gather(key = item, value = value, -starts_with("Subject")) %>%
   separate(item, c(NA, "item", NA), sep = "_") %>%
   group_by(Subject, item) %>%
-  summarise(sum = sum(value)) %>%
+  summarise(sum = sum(value, na.rm = T)) %>%
   ungroup() %>%
-  spread(key= item, value = sum)
+  spread(key= item, value = sum) %>%
+   rename("DARS_Food" = food, 
+         "DARS_Hobby" = hobby,
+         "DARS_Sensory" = sensory, 
+         "DARS_Social" = social) %>%
+  mutate(DARS_total = (DARS_Food + DARS_Hobby + DARS_Sensory + DARS_Social))
+DARS.means <- DARS %>%
+  dplyr::summarise(mean_Hobby = mean(DARS_Hobby), sd_Hobby = sd(DARS_Hobby), mean_Food = mean(DARS_Food), sd_Food = sd(DARS_Food),
+                   mean_Social = mean(DARS_Social), sd_Social = sd(DARS_Social), mean_Sensory = mean(DARS_Sensory), sd_Sensory = sd(DARS_Sensory)) %>%
+  kable(format = "html", caption = "DARS Means") %>%
+    kable_styling(full_width = F)
 ```
 
 #Experiment II - Within-Subject Manipulation of both social (static stim) and liquid feedback
@@ -743,61 +765,200 @@ tab.liq.E2
 ###Self-Report Data
 
 ``` {r SelfReport_Exp2, message = F, warning = F}
-# Self-Report Ratings for Liquid and Social Incentive Types
-# LIQUID
+#Plotting Mean Reward Rate Across both incentive modalities (liquid, social)
+p.Session.RR.ind.2 <- ggplot(data = m.RR.sum, aes(x=IncentiveType, y=meanRR)) +
+           geom_bar(stat="identity", position=position_dodge()) + 
+  geom_errorbar(data = m.RR.sum, position=position_dodge(width=0.9), aes(ymin=meanRR-ci, ymax=meanRR+ci), width=.2) +
+  geom_point(data = incentive.means, aes(x=IncentiveType, y=meanRR),
+             stat="identity", position=position_jitter(w=.3), alpha=0.5) +
+  geom_hline(yintercept = .3, color="darkorchid4") +
+  geom_hline(yintercept = reward_crit_low, color="darkorchid4", linetype="dashed") +
+  geom_hline(yintercept = reward_crit_high, color="darkorchid4", linetype="dashed") +
+  geom_rect(mapping = aes(xmin=.4,xmax=3,ymin=reward_crit_low,ymax=reward_crit_high), fill="darkorchid4", alpha=0.05) +
+   theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  coord_cartesian(ylim=c(.2,.95)) +
+  xlab("Incentive Type") + ylab("Reward Rate") + ggtitle("Reward Rate by Incentive Type")
+p.Session.RR.ind.2
+```
+
+###Post-Task Ratings
+
+``` {r SF_PT_E2, warning = F, message =F}
+# Self-Report Ratings for Liquid and Social Incentives (Post-Task)
+# Liquid Feedback
 data.ratings.liquid<-read.csv(file = ratings.liq.path, sep=",")
 data.ratings.liquid <- data.ratings.liquid %>% filter(!subID %in% sub.exclude)
-# 3 liquid valence ratings
-data.liq.valence<-select(data.ratings.liquid, subID,
-                     Juice_Valence,Neutral_Valence,Salt_Valence)
-data.liq.valence<-gather(data = data.liq.valence, key = valence, value = liking_rating, 
-            Juice_Valence, Neutral_Valence, Salt_Valence) %>%
-  separate(col = valence, into = c("liquid","misc"), sep = "_") %>%
-  select(-misc) %>%
-  mutate(Valence = factor(liquid, levels = c("Juice","Neutral","Salt"), 
-                          labels = c("Positive","Neutral","Negative")))
-# 3 liquid intensity ratings
-data.liq.intensity<-select(data.ratings.liquid, subID,
-                     Juice_Intensity,Neutral_Intensity,Salt_Intensity)
-data.liq.intensity<-gather(data = data.liq.intensity, key = intensity, 
-                           value = intensity_rating, 
-            Juice_Intensity, Neutral_Intensity, Salt_Intensity) %>%
-  separate(col = intensity, into = c("liquid","misc"), sep = "_") %>%
-  select(-misc) 
-# Combining into a liquid ratings dataframe, removing redundant ones
-data.liq.ratings<-left_join(x = data.liq.valence, y = data.liq.intensity, 
-                            by=c("subID","liquid")) %>% arrange(subID)
-rm(data.liq.intensity)
-rm(data.liq.valence)
 
-liq.val.sum<-summarySEwithin2(data = data.liq.ratings, measurevar = "liking_rating", withinvars = "liquid", idvar = "subID")
-
-
-# 9 liquid motivation ratings
-data.liq.mot<-select(data.ratings.liquid, subID,
-                 Juice_1Motivation, Juice_2Motivation, Juice_4Motivation,
-                 Neutral_1Motivation, Neutral_2Motivation, Neutral_4Motivation,
-                 Salt_1Motivation, Salt_2Motivation, Salt_4Motivation)
-data.liq.mot<-gather(data = data.liq.mot, key = motivation, value = rating, 
-            Juice_1Motivation, Juice_2Motivation, Juice_4Motivation,
-            Neutral_1Motivation, Neutral_2Motivation, Neutral_4Motivation,
-            Salt_1Motivation, Salt_2Motivation, Salt_4Motivation) %>%
-  separate(col = motivation, into = c("liquid","misc"), sep = "_")
-# 9 liquid liking ratings
-
-
-# SOCIAL
+#Social Feedback
 data.ratings.social<-read.csv(file = ratings.soc.path, sep=",")
 data.ratings.social <- data.ratings.social %>% filter(!subID %in% sub.exclude)
-# 3 face valence ratings
-data.soc.valence<-select(data.ratings.social, subID,
-                     HappyFace_Valence,NeutralFace_Valence,SadFace_Valence)
-data.soc.valence<-gather(data = data.soc.valence, key = valence, value = liking_rating, 
-            HappyFace_Valence,NeutralFace_Valence,SadFace_Valence) %>%
-  separate(col = valence, into = c("face","misc"), sep = "_") %>%
-  select(-misc) %>%
-  mutate(Valence = factor(face, levels = c("HappyFace","NeutralFace","SadFace"), 
-                          labels = c("Positive","Neutral","Negative")))
+
+#Motivation Ratings
+# Liquid motivation ratings
+data.mot.lf<-select(data.ratings.liquid, subID,
+                 Juice_1Motivation, Juice_2Motivation, Juice_4Motivation,
+                 Neutral_1Motivation, Neutral_2Motivation, Neutral_4Motivation,
+                 Salt_1Motivation, Salt_2Motivation, Salt_4Motivation) %>%
+  pivot_longer(names_to = "motivation", values_to = "rating", -subID) %>%
+  separate(motivation, into = c("Valence","misc"), sep = "_") %>%
+  separate(misc, into = c("moneyreward", NA), sep = 1) %>%
+  mutate(IncentiveType = "Liquid",
+         rewCode = factor(moneyreward, levels = c(1,2,4), labels=c(-1,0,1)),
+         money=factor(moneyreward, levels=c(1,2,4), labels=c("$","$$","$$$$")),
+         Valence=factor(Valence, levels = c("Juice","Neutral","Salt"), labels = c("Positive","Neutral","Negative")),
+         valCode = factor(Valence, levels=c("Positive","Neutral","Negative"), labels=c(1,0,-1)),
+         incentiveCode = factor(IncentiveType, levels=c("Social","Liquid"), labels=c(0,1)))
+data.mot.lf$rewCode <- as.numeric(levels(data.mot.lf$rewCode)[data.mot.lf$rewCode])
+data.mot.lf$valCode <- as.numeric(levels(data.mot.lf$valCode)[data.mot.lf$valCode])
+data.mot.lf$incentiveCode <- as.numeric(levels(data.mot.lf$incentiveCode)[data.mot.lf$incentiveCode])
+
+#Social motivation ratings
+data.mot.sf<-select(data.ratings.social, subID,
+                 HappyFace_1Motivation, HappyFace_2Motivation, HappyFace_4Motivation,
+                 NeutFace_1Motivation, NeutFace_2Motivation, NeutFace_4Motivation,
+                 SadFace_1Motivation, SadFace_2Motivation, SadFace_4Motivation) %>%
+  pivot_longer(names_to = "motivation", values_to = "rating", -subID) %>%
+  separate(motivation, into = c("Valence","misc"), sep = "_") %>%
+  separate(misc, into = c("moneyreward", NA), sep = 1) %>%
+  mutate(IncentiveType = "Social",
+         rewCode = factor(moneyreward, levels = c(1,2,4), labels=c(-1,0,1)),
+         money=factor(moneyreward, levels=c(1,2,4), labels=c("$","$$","$$$$")),
+         Valence=factor(Valence, levels = c("HappyFace","NeutFace","SadFace"), labels = c("Positive","Neutral","Negative")),
+         valCode = factor(Valence, levels=c("Positive","Neutral","Negative"), labels=c(1,0,-1)),
+         incentiveCode = factor(IncentiveType, levels=c("Social","Liquid"), labels=c(0,1)))
+data.mot.sf$rewCode <- as.numeric(levels(data.mot.sf$rewCode)[data.mot.sf$rewCode])
+data.mot.sf$valCode <- as.numeric(levels(data.mot.sf$valCode)[data.mot.sf$valCode])
+data.mot.sf$incentiveCode <- as.numeric(levels(data.mot.sf$incentiveCode)[data.mot.sf$incentiveCode])
+
+#Merging Social + Liquid Feedback Motivation Dataframes
+data.mot.sf.lf <- rbind(data.mot.lf, data.mot.sf)
+
+data.mot.sf.lf.sum<-summarySEwithin2(data = data.mot.sf.lf, measurevar = "rating",
+                                 withinvars = c("Valence","money","IncentiveType"),
+                                 idvar = "subID")
+
+#Plotting the Post-Task Self-Reported Motivation Ratings
+p.mot.sf.lf<-ggplot(data = data.mot.sf.lf.sum, aes(x = Valence, y = rating, fill = money)) +
+  geom_bar(position=position_dodge(), stat = "identity") +
+  coord_cartesian(ylim = c(1,7)) +
+  geom_errorbar(position=position_dodge(.9),
+                mapping = aes(ymin=rating-ci, ymax=rating+ci), width=.2) +
+  xlab("Feedback") + ylab("Motivation Rating") + ggtitle("Self-Reported Motivation") +
+  scale_fill_discrete(name="Monetary\nReward") +
+  theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+    axis.title=element_text(size=12,face = "bold"),
+    axis.text=element_text(size=14),
+    legend.position="right",
+    strip.text.x = element_text(size = 12)) +
+  facet_grid(.~IncentiveType)
+p.mot.sf.lf
+
+#Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
+anova.motive.E2<-ezANOVA(data = data.mot.sf.lf, dv = rating, wid = .(subID), within = c("Valence","IncentiveType","money"))
+
+#Social Feedback ANOVA (Valence x Monetary Reward)
+social.anova.motive.E2<-ezANOVA((data = data.mot.sf.lf %>% filter(IncentiveType == "Social")), dv = rating, wid = .(subID), within = c("Valence","money"))
+
+#Liquid Feedback ANOVA (Valence x Monetary Reward)
+liquid.anova.motive.E2<-ezANOVA((data = data.mot.sf.lf %>% filter(IncentiveType == "Liquid")), dv = rating, wid = .(subID), within = c("Valence","money"))
+
+#Liking Ratings
+#Liquid liking ratings
+data.like.lf<-select(data.ratings.liquid, subID,
+                 Juice_1Liking, Juice_2Liking, Juice_4Liking,
+                 Neutral_1Liking, Neutral_2Liking, Neutral_4Liking,
+                 Salt_1Liking, Salt_2Liking, Salt_4Liking) %>%
+  pivot_longer(names_to = "liking", values_to = "rating", -subID) %>%
+  separate(liking, into = c("Valence","misc"), sep = "_") %>%
+  separate(misc, into = c("moneyreward", NA), sep = 1) %>%
+  mutate(IncentiveType = "Liquid",
+         rewCode = factor(moneyreward, levels = c(1,2,4), labels=c(-1,0,1)),
+         money=factor(moneyreward, levels=c(1,2,4), labels=c("$","$$","$$$$")),
+         Valence=factor(Valence, levels = c("Juice","Neutral","Salt"), labels = c("Positive","Neutral","Negative")),
+         valCode = factor(Valence, levels=c("Positive","Neutral","Negative"), labels=c(1,0,-1)),
+         incentiveCode = factor(IncentiveType, levels=c("Social","Liquid"), labels=c(0,1)))
+data.like.lf$rewCode <- as.numeric(levels(data.like.lf$rewCode)[data.like.lf$rewCode])
+data.like.lf$valCode <- as.numeric(levels(data.like.lf$valCode)[data.like.lf$valCode])
+data.like.lf$incentiveCode <- as.numeric(levels(data.like.lf$incentiveCode)[data.like.lf$incentiveCode])
+
+#Social liking ratings
+data.like.sf<-select(data.ratings.social, subID,
+                 HappyFace_1Liking, HappyFace_2Liking, HappyFace_4Liking,
+                 NeutFace_1Liking, NeutFace_2Liking, NeutFace_4Liking,
+                 SadFace_1Liking, SadFace_2Liking, SadFace_4Liking) %>%
+  pivot_longer(names_to = "liking", values_to = "rating", -subID) %>%
+  separate(liking, into = c("Valence","misc"), sep = "_") %>%
+  separate(misc, into = c("moneyreward", NA), sep = 1) %>%
+  mutate(IncentiveType = "Social",
+         rewCode = factor(moneyreward, levels = c(1,2,4), labels=c(-1,0,1)),
+         money=factor(moneyreward, levels=c(1,2,4), labels=c("$","$$","$$$$")),
+         Valence=factor(Valence, levels = c("HappyFace","NeutFace","SadFace"), labels = c("Positive","Neutral","Negative")),
+         valCode = factor(Valence, levels=c("Positive","Neutral","Negative"), labels=c(1,0,-1)),
+         incentiveCode = factor(IncentiveType, levels=c("Social","Liquid"), labels=c(0,1)))
+data.like.sf$rewCode <- as.numeric(levels(data.like.sf$rewCode)[data.like.sf$rewCode])
+data.like.sf$valCode <- as.numeric(levels(data.like.sf$valCode)[data.like.sf$valCode])
+data.like.sf$incentiveCode <- as.numeric(levels(data.like.sf$incentiveCode)[data.like.sf$incentiveCode])
+
+#Merging Social + Liquid Feedback Dataframes
+data.like.sf.lf <- rbind(data.like.lf, data.like.sf)
+
+data.like.sf.lf.sum<-summarySEwithin2(data = data.like.sf.lf, measurevar = "rating",
+                                 withinvars = c("Valence","money","IncentiveType"),
+                                 idvar = "subID")
+
+data.like.sf.lf.sum$Valence <-factor(data.like.sf.lf.sum$Valence, levels = c("Positive", "Neutral", "Negative"))
+p.like.sf.lf<-ggplot(data = data.like.sf.lf.sum, aes(x = Valence, y = rating, fill = money)) +
+  geom_bar(position=position_dodge(), stat = "identity") +
+  coord_cartesian(ylim = c(1,7)) +
+  geom_errorbar(position=position_dodge(.9),
+                mapping = aes(ymin=rating-ci, ymax=rating+ci), width=.2) +
+  xlab("Feedback") + ylab("Liking Rating") + ggtitle("Self-Reported Liking") +
+  scale_fill_discrete(name="Monetary\nReward") +
+  theme(plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+    axis.title=element_text(size=12,face = "bold"),
+    axis.text=element_text(size=14),
+    legend.position="right",
+    strip.text.x = element_text(size = 12)) +
+  facet_grid(.~IncentiveType)
+p.like.sf.lf
+
+#Summary of Liking Ratings
+
+
+#Omnibus ANOVA (Incentive Type x Valence x Monetary Reward)
+anova.liking.E2<-ezANOVA(data = data.like.sf.lf, dv = rating, wid = .(subID), within = c("Valence","IncentiveType","money"))
+
+#Social Feedback ANOVA (Valence x Monetary Reward)
+social.anova.liking.E2<-ezANOVA((data = data.like.sf.lf %>% filter(IncentiveType == "Social")), dv = rating, wid = .(subID), within = c("Valence","money"))
+
+#Liquid Feedback ANOVA (Valence x Monetary Reward)
+liquid.anova.liking.E2<-ezANOVA((data = data.like.sf.lf %>% filter(IncentiveType == "Liquid")), dv = rating, wid = .(subID), within = c("Valence","money"))
+
+#Formatting Ind Diff Dataframe
+data.ratings.ind<-read.csv(file = indiv.path, sep=",")
+data.ratings.ind <- data.ratings.ind %>% filter(!subID %in% sub.exclude)
+
+#BISBAS
+BISBAS.E2 <- data.ratings.ind %>% select(subID, BAS_Drive, BAS_Fun, BAS_Reward, BAS_Total, BIS)
+BISBAS.E2.means <- BISBAS.E2 %>%
+  dplyr::summarise(mean_Reward = mean(BAS_Reward), sd_Reward = sd(BAS_Reward), mean_Fun = mean(BAS_Fun), sd_Fun = sd(BAS_Fun), 
+                   mean_Drive = mean(BAS_Reward), sd_Drive = sd(BAS_Drive), mean_BIS = mean(BIS), sd_BIS = sd(BIS)) %>%
+  kable(format = "html") %>%
+  kable_styling(full_width = F)
+
+#DARS
+DARS.E2 <- data.ratings.ind %>% select(subID, DARS_Hobby, DARS_FoodDrink, DARS_SocialActivity, DARS_SensoryExp, DARS_Total)
+DARS.E2.means <- DARS.E2 %>%
+  dplyr::summarise(mean_Hobby = mean(DARS_Hobby), sd_Hobby = sd(DARS_Hobby), mean_Food = mean(DARS_FoodDrink), sd_Food = sd(DARS_FoodDrink),
+                   mean_Social = mean(DARS_SocialActivity), sd_Social = sd(DARS_SocialActivity), mean_Sensory = mean(DARS_SensoryExp), sd_Sensory = sd(DARS_SensoryExp)) %>%
+  kable(format = "html") %>%
+    kable_styling(full_width = F)
+
+#MASQ
+MASQ <- data.ratings.ind %>%  select(subID, MASQ_anhed, MASQ_anhed8)
+MASQ.means <- MASQ %>% dplyr::summarise(mean_MASQ_anhed = mean(MASQ_anhed), sd_MASQ_anhed = sd(MASQ_anhed), 
+                                        mean_MASQ_anhed8 = mean(MASQ_anhed8), sd_MASQ_anhed8 = sd(MASQ_anhed8)) %>%
+  kable(format = "html")
 ```
 
 
