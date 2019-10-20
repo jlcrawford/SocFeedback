@@ -157,7 +157,7 @@ RR.sum$Valence<-factor(x = RR.sum$Valence, levels=c("Positive","Neutral","Negati
 p.RR.Exp1<-ggplot(RR.sum, aes(x=Valence, y=meanRR, fill=moneyreward)) + 
   geom_bar(position=position_dodge(width=0.8), stat="identity", width=0.8) +
   geom_errorbar(position=position_dodge(width=0.8), aes(ymin=meanRR-ci, ymax=meanRR+ci), width=.2) +
-  labs(x="Valence",y="Reward Rate") +
+  labs(x="Feedback Valence",y="Reward Rate") +
   scale_x_discrete(labels=c("Positive","Neutral","Negative")) +
   scale_fill_discrete(name="Monetary\nReward") +
   coord_cartesian(ylim=c(.3,.80)) +
@@ -261,8 +261,9 @@ p.affect.valence <- ggplot(word.means.valence.sum, aes(x=Word_Valence, y=meanRat
     strip.text.x = element_text(size = 12)) +
   geom_bar(stat="identity", position=position_dodge()) +
   geom_errorbar(position=position_dodge(width=0.9), aes(ymin=meanRating-ci, ymax=meanRating+ci), width=.2) + 
-   scale_fill_brewer(palette="Set1", name="Motivational Valence", breaks=c("Positive", "Neutral", "Negative"), labels=c("Positive", "Neutral", "Negative")) +
-  xlab("Term Valence") + ylab("Affect Rating") +
+   scale_fill_brewer(palette="Set1", name="Feedback Valence", breaks=c("Positive", "Neutral", "Negative"), labels=c("Positive", "Neutral", "Negative")) +
+  xlab("") + ylab("Affect Rating") +
+  scale_x_discrete(labels=c("Positive" = "Positive\nTerms", "Negative" = "Negative\nTerms")) +
   facet_grid(.~IncentiveType)
 p.affect.valence
 ```
