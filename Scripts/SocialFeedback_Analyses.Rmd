@@ -91,6 +91,14 @@ cohen.d(d = subset(incentive.means, IncentiveType=="Social")$meanRR,
 S.mean.RR = mean(subset(incentive.means, IncentiveType=="Social")$meanRR)
 L.mean.RR = mean(subset(incentive.means, IncentiveType=="Liquid")$meanRR)
 
+
+t.test(x = subset(val.inc.means, IncentiveType=="Liquid" & Valence=="Positive")$meanRR,
+       y = subset(val.inc.means, IncentiveType=="Liquid" & Valence =="Negative")$meanRR,
+       paired = TRUE)
+cohen.d(d = subset(val.inc.means, IncentiveType=="Liquid" & Valence=="Positive")$meanRR,
+       f = subset(val.inc.means, IncentiveType=="Liquid" & Valence =="Negative")$meanRR,
+       paired = TRUE)
+
 #Accuracy Difference Across Social and Liquid Feedback
 t.test(x = subset(incentive.means, IncentiveType=="Social")$meanACC,
        y = subset(incentive.means, IncentiveType=="Liquid")$meanACC,
